@@ -5,6 +5,14 @@
 <link rel="stylesheet" href="${http_root}css/dataTables.bootstrap.min.css">
 <link rel="stylesheet" href="${http_root}css/dataTables.colVis.css">
 <link rel="stylesheet" href="${http_root}css/tautulli-dataTables.css">
+<style>
+    /* The checkbox is a visual indicator only; its state is driven by the
+       click handler on the parent anchor. Blocking pointer events prevents
+       the browser's native toggle from racing that handler. */
+    #stream_decision-menu input[type="checkbox"] {
+        pointer-events: none;
+    }
+</style>
 </%def>
 
 <%def name="body()">
@@ -51,16 +59,58 @@
                     <input type="checkbox" name="media_type-filter" id="history-media_type-live" value="live" autocomplete="off"><i class="fa fa-broadcast-tower"></i> Live TV
                 </label>
             </div>
-            <div class="btn-group" data-toggle="buttons" id="transcode_decision-selection">
-                <label class="btn btn-dark btn-filter">
-                    <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-direct_play" value="direct play" autocomplete="off"><i class="fa fa-play-circle"></i> Direct Play
-                </label>
-                <label class="btn btn-dark btn-filter">
-                    <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-copy" value="copy" autocomplete="off"><i class="fa fa-stream"></i> Direct Stream
-                </label>
-                <label class="btn btn-dark btn-filter">
-                    <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-transcode" value="transcode" autocomplete="off"><i class="fa fa-server"></i> Transcode
-                </label>
+            <div class="btn-group">
+                <div class="btn-group" data-toggle="buttons" id="transcode_decision-selection">
+                    <label class="btn btn-dark btn-filter">
+                        <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-direct_play" value="direct play" autocomplete="off"><i class="fa fa-play-circle"></i> Direct Play
+                    </label>
+                    <label class="btn btn-dark btn-filter">
+                        <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-copy" value="copy" autocomplete="off"><i class="fa fa-stream"></i> Direct Stream
+                    </label>
+                    <label class="btn btn-dark btn-filter">
+                        <input type="checkbox" name="transcode_decision-filter" id="history-transcode_decision-transcode" value="transcode" autocomplete="off"><i class="fa fa-server"></i> Transcode
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-dark" aria-haspopup="true" aria-expanded="false" id="stream_decision-toggle" style="padding-left: 6px; padding-right: 6px;">
+                        <span id="stream_decision-count" style="color: #e5a00d; margin-right: 4px; display: none; min-width: 18px; text-align: center; font-variant-numeric: tabular-nums;"></span><span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" id="stream_decision-menu">
+                        <li class="dropdown-header">Match</li>
+                        <li>
+                            <div class="btn-group btn-group-xs" id="stream_decision-logic" style="margin: 0 20px 6px 20px;">
+                                <label class="btn btn-dark active">
+                                    <input type="radio" name="stream_decision-logic" value="or" autocomplete="off" checked> OR
+                                </label>
+                                <label class="btn btn-dark">
+                                    <input type="radio" name="stream_decision-logic" value="and" autocomplete="off"> AND
+                                </label>
+                            </div>
+                        </li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Container</li>
+                        <li><a href="#" class="stream-decision-option" data-component="container" data-value="direct play"><input type="checkbox" tabindex="-1"> Direct Play</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="container" data-value="transcode"><input type="checkbox" tabindex="-1"> Transcode</a></li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Video</li>
+                        <li><a href="#" class="stream-decision-option" data-component="video" data-value="direct play"><input type="checkbox" tabindex="-1"> Direct Play</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="video" data-value="copy"><input type="checkbox" tabindex="-1"> Direct Stream</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="video" data-value="transcode"><input type="checkbox" tabindex="-1"> Transcode</a></li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Audio</li>
+                        <li><a href="#" class="stream-decision-option" data-component="audio" data-value="direct play"><input type="checkbox" tabindex="-1"> Direct Play</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="audio" data-value="copy"><input type="checkbox" tabindex="-1"> Direct Stream</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="audio" data-value="transcode"><input type="checkbox" tabindex="-1"> Transcode</a></li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Subtitle</li>
+                        <li><a href="#" class="stream-decision-option" data-component="subtitle" data-value="copy"><input type="checkbox" tabindex="-1"> Direct Stream</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="subtitle" data-value="transcode"><input type="checkbox" tabindex="-1"> Transcode</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="subtitle" data-value="burn"><input type="checkbox" tabindex="-1"> Burn</a></li>
+                        <li><a href="#" class="stream-decision-option" data-component="subtitle" data-value="ignore"><input type="checkbox" tabindex="-1"> Ignore</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#" id="stream_decision-clear"><i class="fa fa-times"></i> Clear</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="btn-group">
                 <button class="btn btn-dark refresh-history-button" id="refresh-history-list"><i class="fa fa-refresh"></i> Refresh history</button>
@@ -130,6 +180,60 @@
     $(document).ready(function () {
         var selected_user_id = "${_session['user_group']}" == "admin" ? null : "${_session['user_id']}";
 
+        // Manually toggle the stream decision dropdown. Bootstrap's data-toggle
+        // is not used here so that a global click handler elsewhere in the app
+        // cannot hijack the event. stopPropagation blocks delegated handlers.
+        $('#stream_decision-toggle').on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).closest('.btn-group').toggleClass('open');
+        });
+
+        // Close the menu when clicking anywhere else on the page.
+        $(document).on('click', function () {
+            $('#stream_decision-toggle').closest('.btn-group').removeClass('open');
+        });
+
+        // Handle the OR/AND toggle manually. Bootstrap's data-toggle="buttons"
+        // relies on a delegated handler at the document level, which cannot be
+        // used here because the click has to be stopped from closing the menu.
+        $('#stream_decision-logic').on('click', 'label', function (e) {
+            e.stopPropagation();
+            $('#stream_decision-logic label').removeClass('active');
+            $(this).addClass('active');
+            $(this).find('input[type="radio"]').prop('checked', true);
+            history_table.draw();
+        });
+
+        $('#stream_decision-logic').on('change', function () {
+            history_table.draw();
+        });
+
+        // Toggle the checkbox for a stream decision option without closing the
+        // menu. stopPropagation prevents the document handler above from
+        // treating this as an outside click.
+        $('#stream_decision-menu').on('click', 'a.stream-decision-option', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var checkbox = $(this).find('input[type="checkbox"]');
+            checkbox.prop('checked', !checkbox.prop('checked'));
+            updateStreamDecisionCount();
+            history_table.draw();
+        });
+
+        // Clear every stream decision checkbox and reset the match logic to OR.
+        // The menu is left open so the cleared state is visible.
+        $('#stream_decision-menu').on('click', '#stream_decision-clear', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $('#stream_decision-menu a.stream-decision-option input[type="checkbox"]').prop('checked', false);
+            $('#stream_decision-logic label').removeClass('active');
+            $('#stream_decision-logic label').first().addClass('active');
+            $('#stream_decision-logic input[value="or"]').prop('checked', true);
+            updateStreamDecisionCount();
+            history_table.draw();
+        });
+
         // Load user ids and names (for the selector)
         $.ajax({
             url: 'get_user_names',
@@ -170,6 +274,35 @@
 
         let history_user_last_id = selected_user_id;
 
+        // Collect checked stream decision options into comma-separated
+        // "component:value" tokens, e.g. "video:transcode,subtitle:burn".
+        function getStreamDecisionFilter() {
+            return $('#stream_decision-menu a.stream-decision-option').filter(function () {
+                return $(this).find('input[type="checkbox"]').prop('checked');
+            }).map(function () {
+                return $(this).data('component') + ':' + $(this).data('value');
+            }).get().join(',');
+        }
+
+        // Returns 'or' or 'and' depending on the toggle at the top of the menu.
+        function getStreamDecisionLogic() {
+            return $('input[name="stream_decision-logic"]:checked').val() || 'or';
+        }
+
+        // Show a count of active stream decision filters on the dropdown button
+        // so the filter is visible without opening the menu.
+        function updateStreamDecisionCount() {
+            var count = $('#stream_decision-menu a.stream-decision-option input[type="checkbox"]:checked').length;
+            var badge = $('#stream_decision-count');
+            if (count > 0) {
+                // inline-block is required for min-width to take effect, which
+                // reserves space for two digits so the button does not shift.
+                badge.text(count).css('display', 'inline-block');
+            } else {
+                badge.hide();
+            }
+        }
+
         function loadHistoryTable(media_type, transcode_decision, selected_user_id) {
             history_table_options.ajax = {
                 url: 'get_history',
@@ -179,6 +312,8 @@
                         json_data: JSON.stringify(d),
                         media_type: media_type,
                         transcode_decision: transcode_decision,
+                        stream_decision: getStreamDecisionFilter(),
+                        stream_decision_logic: getStreamDecisionLogic(),
                         user_id: selected_user_id
                     };
                 },
@@ -243,6 +378,7 @@
             history_transcode_decision.closest('label').addClass('active');
         });
 
+        updateStreamDecisionCount();
         loadHistoryTable(media_type, transcode_decision, selected_user_id);
 
         % if _session['user_group'] == 'admin':

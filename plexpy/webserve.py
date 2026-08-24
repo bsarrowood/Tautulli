@@ -2048,6 +2048,48 @@ class WebInterface(object):
             transcode_decision = helpers.split_strip(kwargs.pop('transcode_decision', ''))
             if transcode_decision and 'all' not in transcode_decision:
                 custom_where.append(['session_history_media_info.transcode_decision IN', transcode_decision])
+        if 'stream_decision' in kwargs:
+            stream_decision = kwargs.pop('stream_decision')
+            stream_decision_logic = kwargs.pop('stream_decision_logic', 'or')
+            if stream_decision:
+                # Tokens arrive as "component:value" pairs from the History
+                # dropdown. The column whitelist below is also the input
+                # validation; unknown components are silently discarded.
+                decision_columns = {
+                    'container': 'session_history_media_info.stream_container_decision',
+                    'video': 'session_history_media_info.stream_video_decision',
+                    'audio': 'session_history_media_info.stream_audio_decision',
+                    'subtitle': 'session_history_media_info.stream_subtitle_decision'
+                }
+                grouped = {}
+                for token in stream_decision.split(','):
+                    component, _, value = token.partition(':')
+                    if component in decision_columns and value:
+                        grouped.setdefault(component, []).append(value)
+
+                if stream_decision_logic == 'and':
+                    # One custom_where entry per component. ssp_query ORs the
+                    # values within an entry and ANDs separate entries.
+                    for component, values in grouped.items():
+                        custom_where.append([decision_columns[component], values])
+                else:
+                    # custom_where cannot express OR across different columns,
+                    # so collapse the whole OR into a single CASE expression
+                    # that evaluates to 1 when any selected condition matches.
+                    # Column names stay fully qualified so that the filtered
+                    # count query detects it needs to join
+                    # session_history_media_info. Values are interpolated into
+                    # the SQL directly, so they are whitelisted rather than
+                    # parameterised.
+                    allowed_values = ('direct play', 'copy', 'transcode', 'burn', 'ignore')
+                    conditions = []
+                    for component, values in grouped.items():
+                        safe_values = [v for v in values if v in allowed_values]
+                        if safe_values:
+                            quoted = ', '.join("'{0}'".format(v) for v in safe_values)
+                            conditions.append('{0} IN ({1})'.format(decision_columns[component], quoted))
+                    if conditions:
+                        custom_where.append(['(CASE WHEN ' + ' OR '.join(conditions) + ' THEN 1 ELSE 0 END)', 1])
         if 'guid' in kwargs:
             guid = helpers.split_strip(kwargs.pop('guid', '').split('?')[0])
             if guid:

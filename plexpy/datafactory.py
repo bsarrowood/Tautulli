@@ -34,6 +34,24 @@ _UPDATE_METADATA_IDS = {
     'rating_key_ids': set()
 }
 
+# Table prefixes that must be stripped when a where clause written against the
+# joined history tables is reused against the flat "sessions" table.
+_HISTORY_TABLE_PREFIXES = (
+    'session_history_metadata.',
+    'session_history_media_info.',
+    'session_history.',
+    'users.'
+)
+
+
+def strip_table_prefixes(clause):
+    """Remove table qualifiers from a where clause so it can run against
+    the sessions table. Replaces every occurrence rather than splitting on
+    the last dot, so that expressions referencing more than one column
+    survive intact."""
+    for prefix in _HISTORY_TABLE_PREFIXES:
+        clause = clause.replace(prefix, '')
+    return clause
 
 class DataFactory(object):
     """
@@ -134,7 +152,7 @@ class DataFactory(object):
         if include_activity:
             table_name_union = 'sessions'
             # Very hacky way to match the custom where parameters for the unioned table
-            custom_where_union = [[c[0].split('.')[-1], c[1]] for c in custom_where]
+            custom_where_union = [[strip_table_prefixes(c[0]), c[1]] for c in custom_where]
             group_by_union = ['session_key']
 
             columns_union = [
@@ -228,7 +246,7 @@ class DataFactory(object):
         if include_activity:
             sessions_alias = ", (CASE WHEN live = 1 THEN 'live' ELSE media_type END) AS media_type_live"
             sessions_where, sessions_args = datatables.build_custom_where(
-                [[c[0].split('.')[-1], c[1]] for c in custom_where])
+                [[strip_table_prefixes(c[0]), c[1]] for c in custom_where])
             sessions_count = ("SELECT c FROM (SELECT COUNT(DISTINCT session_key) AS c%s "
                               "FROM sessions %s)" % (sessions_alias, sessions_where))
             filtered_count_query = 'SELECT (%s) + (%s) AS filtered_count' % (history_count, sessions_count)
