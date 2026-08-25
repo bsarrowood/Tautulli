@@ -200,11 +200,48 @@ history_table_options = {
                     }
                 }
             },
-            "width": "25%",
+            "width": "22%",
             "className": "datatable-wrap"
         },
         {
             "targets": [8],
+            "data": "stream_video_full_resolution",
+            "render": function (data, type, full) {
+                return data || 'n/a';
+            },
+            "searchable": false,
+            "width": "4%",
+            "className": "no-wrap"
+        },
+        {
+            "targets": [9],
+            "data": "stream_bitrate",
+            "render": function (data, type, full) {
+                // Sorting and filtering use the raw kbps value so that
+                // ordering stays numeric; only the display is formatted.
+                if (type !== 'display') {
+                    return data;
+                }
+                if (data === null || data === '') {
+                    return 'n/a';
+                }
+                var streamed = (data / 1000).toFixed(1) + ' Mbps';
+                var source = full['bitrate'];
+                // Flag streams sent at a higher bitrate than the source file,
+                // which indicates a wasteful transcode rather than a downgrade.
+                if (source && data > source) {
+                    return '<span class="transcode-tooltip" data-toggle="tooltip" title="Source: ' +
+                        (source / 1000).toFixed(1) + ' Mbps">' + streamed +
+                        ' <i class="fa fa-exclamation-triangle" style="color: #e5a00d;"></i></span>';
+                }
+                return streamed;
+            },
+            "searchable": false,
+            "width": "6%",
+            "className": "no-wrap"
+        },
+        {
+            "targets": [10],
             "data": "started",
             "createdCell": function (td, cellData, rowData, row, col) {
                 if (cellData === null) {
@@ -218,7 +255,7 @@ history_table_options = {
             "className": "no-wrap"
         },
         {
-            "targets": [9],
+            "targets": [11],
             "data": "paused_counter",
             "render": function (data, type, full) {
                 if (data !== null) {
@@ -232,7 +269,7 @@ history_table_options = {
             "className": "no-wrap"
         },
         {
-            "targets": [10],
+            "targets": [12],
             "data": "stopped",
             "createdCell": function (td, cellData, rowData, row, col) {
                 if (cellData === null || (rowData['state'] != null && rowData['state'] != "stopped")) {
@@ -246,7 +283,7 @@ history_table_options = {
             "className": "no-wrap"
         },
         {
-            "targets": [11],
+            "targets": [13],
             "data": "play_duration",
             "render": function (data, type, full) {
                 if (data !== null) {
@@ -260,7 +297,7 @@ history_table_options = {
             "className": "no-wrap"
         },
         {
-            "targets": [12],
+            "targets": [14],
             "data": "watched_status",
             "createdCell": function (td, cellData, rowData, row, col) {
                 var circleValue = "";

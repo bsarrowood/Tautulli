@@ -130,6 +130,8 @@
                 <th align="left" id="product">Product</th>
                 <th align="left" id="player">Player</th>
                 <th align="left" id="title">Title</th>
+                <th align="left" id="quality">Quality</th>
+                <th align="left" id="stream_bitrate">Bitrate</th>
                 <th align="left" id="started">Started</th>
                 <th align="left" id="paused_counter">Paused</th>
                 <th align="left" id="stopped">Stopped</th>
@@ -325,7 +327,7 @@
             var colvis = new $.fn.dataTable.ColVis(history_table, {
                 buttonText: '<i class="fa fa-columns"></i> Select columns',
                 buttonClass: 'btn btn-dark',
-                exclude: [0, 12]
+                exclude: [0, 14]
             });
             $(colvis.button()).appendTo('div.colvis-button-bar');
 
