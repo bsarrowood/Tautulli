@@ -97,8 +97,8 @@ history_table_options = {
                     $(td).html(cellData);
                 }
             },
-            "width": "9%",
-            "className": "no-wrap"
+            "width": "11%",
+            "className": "datatable-wrap"
         },
         {
             "targets": [3],
