@@ -871,6 +871,7 @@ a .users-poster-face:hover {
     height: 235px;
     width: 100%;
     padding: 5px;
+    position: relative;
     overflow: hidden;
     -webkit-transition: background 1s linear;
     transition: background 1s linear;
@@ -1078,14 +1079,16 @@ a .users-poster-face:hover {
 }
 .dashboard-activity-info-time {
     position: absolute;
-    top: 200px;
+    bottom: 6px;
     right: 10px;
     text-align: right;
     font-size: 10px;
     z-index: 2;
 }
 .dashboard-activity-info-channel {
-    display: inline-block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     max-width: 75px;
     text-overflow: ellipsis;
     overflow: hidden;
