@@ -1057,19 +1057,24 @@ a .users-poster-face:hover {
     white-space: nowrap;
 }
 .dashboard-activity-info-item .sub-value.time-right {
-    margin-right: 60px;
+    margin-right: 87px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
 }
+.dashboard-activity-info-item .sub-value.location-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
 .dashboard-activity-info-item .sub-value .ip-container {
     display: inline-flex;
+    min-width: 0;
 }
 .dashboard-activity-info-item .sub-value .ip-address {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 125px;
 }
 .dashboard-activity-info-time {
     position: absolute;
