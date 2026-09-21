@@ -199,7 +199,7 @@ def import_tautulli_db(database=None, method=None, backup=False):
         for table_name in session_history_tables:
             db.action("DROP TABLE {table}_copy".format(table=table_name))
 
-    vacuum()
+    optimize_db()
 
     logger.info("Tautulli Database :: Tautulli database import complete.")
     set_is_importing(False)
