@@ -199,7 +199,7 @@ def import_tautulli_db(database=None, method=None, backup=False):
         for table_name in session_history_tables:
             db.action("DROP TABLE {table}_copy".format(table=table_name))
 
-    vacuum()
+    optimize_db()
 
     logger.info("Tautulli Database :: Tautulli database import complete.")
     set_is_importing(False)
@@ -322,7 +322,12 @@ def optimize():
 
     logger.info("Tautulli Database :: Optimizing database.")
     try:
-        monitor_db.action("PRAGMA optimize")
+        monitor_db.action("PRAGMA analysis_limit=400")
+        # The 0x10000 bit makes optimize examine all tables, not just the
+        # ones queried on this connection (which is none for a fresh
+        # connection); it is ignored by SQLite < 3.46, where the boot-time
+        # ANALYZE in dbcheck() covers statistics instead
+        monitor_db.action("PRAGMA optimize(0x10002)")
     except Exception as e:
         logger.error("Tautulli Database :: Failed to optimize database: %s" % e)
 
